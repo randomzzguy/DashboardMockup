@@ -1,0 +1,2042 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blockchain Dashboard</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+        /* Design tokens: Nuclyan OS palette and themes */
+        :root {
+            /* Core brand */
+            --brand-black: #0D1A2F; /* from palette */
+            --brand-white: #ffffff;
+            --brand-grey: #17364F; /* deep slate */
+            --brand-maroon: #500A1F; /* deep maroon */
+
+            /* Given palette */
+            --acc-turquoise: #09D8C7;
+            --acc-deep-slate: #17364F;
+            --acc-midnight: #0D1A2F;
+            --acc-plum: #411E3A;
+            --acc-crimson: #BD0927;
+            --acc-maroon: #500A1F;
+
+            /* Complimentary accents */
+            --acc-neon-blue: #00A8FF;
+            --acc-lime-green: #9BE22D;
+            --acc-sunset-orange: #FF7A45;
+            --acc-gold: #F5C518;
+            --acc-magenta: #FF2E88;
+            --acc-indigo: #4B5DFF;
+            --acc-digital-cyan: #18D1FF;
+
+            /* Surfaces and text (dark default) */
+            --bg-app: var(--acc-midnight);
+            --bg-panel: #13233b;
+            --bg-card: #1E293B;
+            --border: #334155;
+            --text: #F8FAFC;
+            --text-dim: #94A3B8;
+            --shadow: 0 6px 20px rgba(0,0,0,0.35);
+
+            /* Accents used across UI (restricted to provided palette) */
+            --accent-1: var(--acc-turquoise);
+            --accent-2: var(--acc-plum);
+            --accent-3: var(--acc-crimson);
+            --accent-4: var(--acc-deep-slate);
+            --accent-5: var(--acc-midnight);
+            --accent-6: var(--acc-maroon);
+        }
+
+        body.light {
+            --bg-app: #f6f8fb;
+            --bg-panel: #ffffff;
+            --bg-card: #ffffff;
+            --border: #e5e7eb;
+            --text: #0f172a;
+            --text-dim: #475569;
+            --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        }
+        body {
+            box-sizing: border-box;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Inter, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-app);
+            color: var(--text);
+            overflow-x: hidden;
+            height: 100%;
+        }
+
+        .dashboard-container {
+            display: flex;
+            height: 100%;
+            min-height: 100%;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-app) 100%);
+            border-right: 1px solid var(--border);
+            padding: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-3));
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .logo {
+            padding: 0 2rem 2rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        /* Header theme toggle and top tabs */
+        .header .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--text);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.2s ease;
+        }
+        .header .theme-toggle:hover { transform: translateY(-1px); }
+        .header .theme-toggle .icon { font-size: 1rem; }
+
+        .top-tabs {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px dashed var(--border);
+            background: linear-gradient(180deg, transparent, rgba(255,255,255,0.02));
+        }
+        .top-tab {
+            appearance: none;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text);
+            padding: 0.45rem 0.8rem;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+        }
+        .top-tab:hover { transform: translateY(-1px); }
+        .top-tab.active {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-1) 20%, transparent);
+        }
+
+        /* Light mode specific polishing */
+        body.light .sidebar::before { opacity: 0.9; }
+        body.light .logout-btn { border-color: var(--border); }
+  
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #14B8A6, #A855F7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-tabs {
+            list-style: none;
+            padding: 0 1rem;
+        }
+
+        .nav-tab {
+            margin-bottom: 0.5rem;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #14B8A6, #A855F7);
+            box-shadow: 0 4px 20px rgba(20, 184, 166, 0.3);
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: rgba(20, 184, 166, 0.1);
+            transform: translateX(8px);
+        }
+
+        .nav-tab a {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab .icon {
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-panel);
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem; /* space between theme toggle and logout */
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #14B8A6, transparent);
+        }
+
+        .header-left h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22C55E;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* Logout Button */
+        .logout-btn {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.25rem;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+            background: linear-gradient(135deg, #F87171, #EF4444);
+        }
+
+        .logout-btn:active {
+            transform: translateY(0);
+        }
+
+        .logout-icon {
+            font-size: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .logout-text {
+            transition: transform 0.3s ease;
+        }
+
+        .logout-btn:hover .logout-icon {
+            transform: rotate(15deg);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #14B8A6, #A855F7);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(2, 6, 23, 0.6);
+            border-color: var(--border);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        /* Category accents: stripe only; backgrounds use theme tokens */
+        .card[data-category] { background: var(--bg-card); border-color: var(--border); }
+        .card[data-category="network"]::before { background: linear-gradient(90deg, var(--accent-2), var(--accent-1)); }
+        .card[data-category="mining"]::before { background: linear-gradient(90deg, var(--accent-5), var(--accent-3)); }
+        .card[data-category="nodes"]::before { background: linear-gradient(90deg, var(--accent-4), var(--accent-1)); }
+        .card[data-category="security"]::before { background: linear-gradient(90deg, var(--accent-6), var(--accent-5)); }
+        .card[data-category="ai"]::before { background: linear-gradient(90deg, var(--accent-3), var(--accent-1)); }
+        .card[data-category="settings"]::before { background: linear-gradient(90deg, var(--accent-2), var(--accent-1)); }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+            color: #14B8A6;
+        }
+
+        .metric {
+            margin-bottom: 1rem;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            transition: all 0.3s ease;
+        }
+
+        .metric-value.animate {
+            color: #14B8A6;
+            text-shadow: 0 0 10px rgba(20, 184, 166, 0.5);
+        }
+
+        .metric-unit {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+
+        /* Progress Bars */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #14B8A6, #A855F7);
+            border-radius: 4px;
+            transition: width 1s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        /* Gauge Chart */
+        .gauge-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 120px;
+            position: relative;
+        }
+
+        .gauge {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #14B8A6 0deg, #A855F7 120deg, #334155 120deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .gauge::before {
+            content: '';
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            position: absolute;
+        }
+
+        .gauge-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            z-index: 1;
+            color: var(--text);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            height: 150px;
+            position: relative;
+            margin-top: 1rem;
+        }
+
+        .chart-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(20, 184, 166, 0.2) 0%, transparent 100%);
+            border-top: 2px solid #14B8A6;
+            border-radius: 4px 4px 0 0;
+            animation: chartGrow 2s ease-out;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-badge.online {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22C55E;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-badge.warning {
+            background: rgba(251, 191, 36, 0.2);
+            color: #FBBF24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .status-badge.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #EF4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes chartGrow {
+            0% { height: 0; }
+            100% { height: 100%; }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(20, 184, 166, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(20, 184, 166, 0.8); }
+        }
+
+        /* Login Screen Styles */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100%;
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 20%, rgba(20, 184, 166, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .login-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #14B8A6, #A855F7);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .login-box.locked {
+            border-color: #EF4444;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .login-box.locked::before {
+            background: linear-gradient(90deg, #EF4444, #DC2626);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .login-logo h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #14B8A6, #A855F7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-logo p {
+            color: var(--text-dim);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-group label {
+            color: var(--text);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .input-group input {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: #14B8A6;
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+            background: var(--bg-card);
+        }
+
+        .input-group input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #14B8A6, #A855F7);
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            color: var(--text);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(20, 184, 166, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn.unlock-btn {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+        }
+
+        .login-btn.unlock-btn:hover {
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-text {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .login-btn:hover .btn-icon {
+            transform: translateX(4px);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            color: #EF4444;
+            font-size: 0.9rem;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        .lock-message {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+        }
+
+        .lock-message p {
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .lock-message p:last-child {
+            margin-bottom: 0;
+            color: var(--text-dim);
+        }
+
+        .login-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            align-items: center;
+        }
+
+        .status-label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .status-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #14B8A6;
+        }
+
+        .status-value.error {
+            color: #EF4444;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes slideIn {
+            0% { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .fade-in { animation: fadeIn 0.3s ease; }
+        .fade-out { animation: fadeOut 0.3s ease; }
+
+        @keyframes slideUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+            }
+            
+            .nav-tab a {
+                padding: 1rem 0.5rem;
+                justify-content: center;
+            }
+            
+            .nav-tab .nav-text {
+                display: none;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+
+            .login-container {
+                padding: 1rem;
+            }
+
+            .login-box {
+                padding: 2rem;
+            }
+
+            .login-status {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+    <style>
+        /* Visual components for AI sections */
+        .visuals-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        .ring {
+            --p: 91%;
+            width: 80px; height: 80px; border-radius: 50%;
+            background: conic-gradient(#14B8A6 var(--p), #334155 0);
+            position: relative;
+        }
+        .ring::after { content: ''; position: absolute; inset: 10px; background: var(--bg-panel); border-radius: 50%; }
+        .ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+        .segmented-bar { display: flex; gap: 2px; width: 220px; height: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .segment { flex: 1; }
+        .segment.boost { background: #14B8A6; }
+        .segment.throttle { background: #A855F7; }
+        .segment.idle { background: #334155; }
+
+        .donut { --portion: 28; width: 80px; height: 80px; border-radius: 50%; background:
+            conic-gradient(#22c55e calc(var(--portion)*1%), #334155 0);
+            position: relative; }
+        .donut::after { content: ''; position: absolute; inset: 10px; background: var(--bg-panel); border-radius: 50%; }
+        .donut-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    </style>
+    <style>
+        /* Layout utilities to vary card sizing and placement */
+        .dashboard-grid { grid-auto-rows: minmax(160px, auto); grid-auto-flow: dense; }
+        .card.full { grid-column: 1 / -1; }
+        .card.span-2 { grid-column: span 2; }
+        .card.span-3 { grid-column: span 3; }
+        .card.tall { grid-row: span 2; min-height: 280px; }
+        @media (max-width: 768px) {
+            .card.full, .card.span-2, .card.span-3, .card.tall { grid-column: span 1; grid-row: auto; min-height: auto; }
+        }
+        /* Status banner */
+        .status-banner {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            margin: 0 1rem 0.5rem 1rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            background: linear-gradient(90deg, color-mix(in srgb, var(--acc-crimson) 20%, transparent), transparent);
+            border-radius: 12px;
+            color: var(--text);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .status-banner.show { opacity: 1; pointer-events: auto; }
+        .status-banner .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--acc-crimson); box-shadow: 0 0 0 4px color-mix(in srgb, var(--acc-crimson) 15%, transparent); }
+
+        /* Tables */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .data-table th, .data-table td { padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--border); color: var(--text); }
+        .data-table th { text-align: left; color: var(--text-dim); font-weight: 600; }
+
+        /* Shimmer utility */
+        .shimmer { position: relative; overflow: hidden; background: color-mix(in srgb, var(--bg-card) 80%, #ffffff); }
+        .shimmer::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); animation: shimmer 1.6s infinite; }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body><!-- Login Screen -->
+  <div id="login-screen" class="login-container">
+   <div class="login-box">
+    <div class="login-header">
+     <div class="login-logo">
+      <h1>🔐 Secure Access</h1>
+      <p>Blockchain Control Center</p>
+     </div>
+    
+    </div>
+    <form id="login-form" class="login-form">
+     <div class="input-group"><label for="username">Username</label> <input type="text" id="username" name="username" placeholder="Enter username" required>
+     </div>
+     <div class="input-group"><label for="password">Password</label> <input type="password" id="password" name="password" placeholder="Enter password" required>
+     </div><button type="submit" class="login-btn"> <span class="btn-text">Access Dashboard</span> <span class="btn-icon">→</span> </button>
+     <div id="login-error" class="error-message" style="display: none;"></div>
+     <div class="login-status">
+      <div class="status-item"><span class="status-label">Attempts Remaining:</span> <span id="attempts-remaining" class="status-value">5</span>
+      </div>
+      <div class="status-item"><span class="status-label">System Status:</span> <span class="status-badge online">
+        <div class="status-dot"></div> Active </span>
+      </div>
+     </div>
+    </form>
+   </div>
+  </div><!-- System Locked Screen -->
+  <div id="locked-screen" class="login-container" style="display: none;">
+   <div class="login-box locked">
+    <div class="login-header">
+     <div class="login-logo">
+      <h1>🚫 System Locked</h1>
+      <p>Security Protocol Activated</p>
+     </div>
+    </div>
+    <div class="lock-message">
+     <p>Multiple failed login attempts detected.</p>
+     <p>Enter master key to unlock system.</p>
+    </div>
+    <form id="unlock-form" class="login-form">
+     <div class="input-group"><label for="master-key">Master Key</label> <input type="password" id="master-key" name="master-key" placeholder="Enter master key" required>
+     </div><button type="submit" class="login-btn unlock-btn"> <span class="btn-text">Unlock System</span> <span class="btn-icon">🔓</span> </button>
+     <div id="unlock-error" class="error-message" style="display: none;"></div>
+     <div class="login-status">
+      <div class="status-item"><span class="status-label">Failed Attempts:</span> <span id="total-attempts" class="status-value error">0</span>
+      </div>
+      <div class="status-item"><span class="status-label">System Status:</span> <span class="status-badge error">
+        <div class="status-dot"></div> Locked </span>
+      </div>
+     </div>
+    </form>
+   </div>
+  </div>
+  <div id="dashboard-container" class="dashboard-container" style="display: none;">
+   <!-- Main Content -->
+   <nav class="sidebar" aria-label="Primary">
+     <div class="logo">
+       <h1>Control Center</h1>
+       <p style="color: var(--text-dim); font-size: 0.9rem">Operations &amp; Analytics</p>
+     </div>
+     <ul class="nav-tabs">
+       <li class="nav-tab active"><a href="#" data-tab="exec"><span class="icon">🏠</span>Executive Overview</a></li>
+       <li class="nav-tab"><a href="#" data-tab="temperature"><span class="icon">🌡️</span>Temperature Alerts</a></li>
+       <li class="nav-tab"><a href="#" data-tab="projects"><span class="icon">📦</span>Project Manager</a></li>
+       <li class="nav-tab"><a href="#" data-tab="alerts"><span class="icon">🚨</span>Alerts &amp; Tasks</a></li>
+       <li class="nav-tab"><a href="#" data-tab="ai"><span class="icon">🤖</span>AI Insights</a></li>
+       <li class="nav-tab"><a href="#" data-tab="rank"><span class="icon">🌍</span>Global Rank</a></li>
+       <li class="nav-tab"><a href="#" data-tab="miner"><span class="icon">🔍</span>Miner Analytics</a></li>
+       <li class="nav-tab"><a href="#" data-tab="reports"><span class="icon">📄</span>Reports</a></li>
+     </ul>
+   </nav>
+   <main class="main-content"><!-- Header -->
+    <header class="header">
+     <div class="header-left">
+      <h2 id="main-title">Blockchain Control Center</h2>
+      <div class="header-status">
+       <div class="status-indicator">
+        <div class="status-dot"></div><span>System Online</span>
+       </div><span>•</span> <span id="current-time">Loading...</span> <span>•</span> <span>Uptime: 14d 6h 21m</span>
+      </div>
+     </div>
+     <div class="header-right">
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark">
+        <span class="icon" id="theme-icon">🌙</span>
+        <span id="theme-label">Dark</span>
+      </button>
+      <button id="logout-btn" class="logout-btn"> <span class="logout-icon">🔓</span> <span class="logout-text">Logout</span> </button>
+     </div>
+    </header><!-- Dashboard Grid -->
+    
+    <div id="health-banner" class="status-banner" role="status" aria-live="polite">
+      <span class="dot" aria-hidden="true"></span>
+      <strong>System Health Alert:</strong>
+      <span id="health-text">More than 10% miners inactive. Check Temperature Alerts.</span>
+    </div>
+    <div class="dashboard-grid"><!-- System Performance Card -->
+     <div class="card full" data-category="system" data-tab="exec">
+      <div class="card-header">
+       <h3 class="card-title">System Performance</h3><span class="card-icon">⚡</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Hash Rate
+       </div>
+       <div class="metric-value" id="hash-rate">
+        162.4 <span class="metric-unit">TH/s</span>
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Power Draw
+       </div>
+       <div class="metric-value" id="power-draw">
+        1350 <span class="metric-unit">W</span>
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        CPU Load
+       </div>
+       <div class="metric-value" id="cpu-load">
+        73<span class="metric-unit">%</span>
+       </div>
+       <div class="progress-bar">
+        <div class="progress-fill" id="cpu-progress" style="width: 73%"></div>
+       </div>
+      </div>
+     </div><!-- Temperature Gauge -->
+     <div class="card" data-category="system" data-tab="exec">
+      <div class="card-header">
+       <h3 class="card-title">Temperature Monitor</h3><span class="card-icon">🌡️</span>
+      </div>
+      <div class="gauge-container">
+       <div class="gauge">
+        <div class="gauge-value" id="temperature">
+         68°C
+        </div>
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Fan Speed
+       </div>
+       <div class="metric-value" id="fan-speed">
+        4200 <span class="metric-unit">RPM</span>
+       </div>
+      </div>
+     </div><!-- Network Overview -->
+     <div class="card span-2" data-category="network" data-tab="exec">
+      <div class="card-header">
+       <h3 class="card-title">Network Overview</h3><span class="card-icon">🌐</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Active Connections
+       </div>
+       <div class="metric-value" id="connections">
+        27 <span class="metric-unit">peers</span>
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Block Height
+       </div>
+       <div class="metric-value" id="block-height">
+        874,221
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Latency
+       </div>
+       <div class="metric-value" id="latency">
+        38 <span class="metric-unit">ms</span>
+       </div>
+      </div>
+      <div class="chart-container">
+       <div class="chart-line"></div>
+      </div>
+     </div><!-- Mining Stats -->
+     <div class="card span-2" data-category="mining" data-tab="exec">
+      <div class="card-header">
+       <h3 class="card-title">Mining Statistics</h3><span class="card-icon">💰</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Pool Name
+       </div>
+       <div class="metric-value" id="pool-name" style="font-size: 1.2rem;">
+        EtherMine
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Shares Accepted
+       </div>
+       <div class="metric-value" id="shares-accepted">
+        13,284
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Current Reward
+       </div>
+       <div class="metric-value" id="current-reward">
+        0.0423 <span class="metric-unit">ETH</span>
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Pending Balance
+       </div>
+       <div class="metric-value" id="pending-balance">
+        0.326 <span class="metric-unit">ETH</span>
+       </div>
+      </div>
+     </div><!-- Memory & Storage -->
+     <div class="card span-2" data-category="system" data-tab="exec">
+      <div class="card-header">
+       <h3 class="card-title">Memory &amp; Storage</h3><span class="card-icon">💾</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Memory Usage
+       </div>
+       <div class="metric-value" id="memory-usage">
+        14.2 <span class="metric-unit">GB / 16 GB</span>
+       </div>
+       <div class="progress-bar">
+        <div class="progress-fill" style="width: 89%"></div>
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        GPU Utilization
+       </div>
+       <div class="metric-value" id="gpu-usage">
+        92<span class="metric-unit">%</span>
+       </div>
+       <div class="progress-bar">
+        <div class="progress-fill" style="width: 92%"></div>
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Disk I/O
+       </div>
+       <div class="metric-value" id="disk-io">
+        243 <span class="metric-unit">MB/s</span>
+       </div>
+      </div>
+     </div><!-- Node Health -->
+     <div class="card tall" data-category="nodes" data-tab="exec">
+      <div class="card-header">
+       <h3 class="card-title">Node Health</h3><span class="card-icon">🧩</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Node Type
+       </div>
+       <div class="metric-value" id="node-type" style="font-size: 1.2rem;">
+        Full Node
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Peers Connected
+       </div>
+       <div class="metric-value" id="peers-connected">
+        42
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Sync Status
+       </div>
+       <div class="metric-value" id="sync-status">
+        99.7<span class="metric-unit">%</span>
+       </div>
+       <div class="progress-bar">
+        <div class="progress-fill" style="width: 99.7%"></div>
+       </div>
+      </div>
+      <div class="status-badge online">
+       <div class="status-dot"></div> Fully Synchronized
+      </div>
+     </div><!-- Security Monitor -->
+     <div class="card tall" data-category="security" data-tab="exec">
+      <div class="card-header">
+       <h3 class="card-title">Security Monitor</h3><span class="card-icon">🔒</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Failed Logins
+       </div>
+       <div class="metric-value" id="failed-logins">
+        2
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        API Requests Today
+       </div>
+       <div class="metric-value" id="api-requests">
+        14,203
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Active Tokens
+       </div>
+       <div class="metric-value" id="active-tokens">
+        23
+       </div>
+      </div>
+      <div class="status-badge online">
+       <div class="status-dot"></div> Firewall Enabled
+      </div>
+      <div class="status-badge online" style="margin-top: 0.5rem;">
+       <div class="status-dot"></div> 0 Intrusion Alerts
+      </div>
+     </div><!-- AI Insights -->
+     <div class="card span-2" data-category="ai" data-tab="ai">
+      <div class="card-header">
+       <h3 class="card-title">AI Insights</h3><span class="card-icon">🧠</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Prediction
+       </div>
+       <div class="metric-value" style="font-size: 1rem; line-height: 1.4;">
+        Hash rate drop in 4h due to thermal load
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Recommendation
+       </div>
+       <div class="metric-value" style="font-size: 1rem; line-height: 1.4;">
+        Fan curve adjustment needed
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">
+        Estimated Improvement
+       </div>
+       <div class="metric-value">
+        +8<span class="metric-unit">% uptime</span>
+       </div>
+      </div>
+      <div class="status-badge warning">
+       <div class="status-dot"></div> Action Required
+      </div>
+     </div>
+     <!-- Reliability Forecast -->
+     <div class="card span-2" data-category="ai" data-tab="ai">
+      <div class="card-header">
+       <h3 class="card-title">Reliability Forecast</h3><span class="card-icon">📈</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Next Predicted Failure</div>
+       <div class="metric-value" id="predicted-failure">Miner #24 in 6.3 hours</div>
+      </div>
+     <div class="metric">
+       <div class="metric-label">Confidence</div>
+       <div class="metric-value" id="forecast-confidence">91<span class="metric-unit">%</span></div>
+     </div>
+      <div class="visuals-row">
+       <div class="ring" style="--p: 91%">
+         <div class="ring-label">91%</div>
+       </div>
+       <div style="font-size: 0.9rem; color: #94a3b8;">Model confidence</div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Risk Level</div>
+       <div class="metric-value" id="risk-level">🟠 Moderate</div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Root Cause Estimate</div>
+       <div class="metric-value" id="root-cause">Thermal drift + unstable voltage</div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Preventive Action</div>
+       <div class="metric-value" id="preventive-action">Reduce load 10% or improve airflow</div>
+      </div>
+     </div>
+
+     <!-- AI Load Balancer -->
+     <div class="card span-2 tall" data-category="ai" data-tab="ai">
+      <div class="card-header">
+       <h3 class="card-title">AI Load Balancer</h3><span class="card-icon">⚙️</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Optimization Mode</div>
+       <div class="metric-value" id="optimization-mode">Enabled (Auto)</div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Current Focus</div>
+       <div class="metric-value" id="current-focus">Max TH/s per kW</div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Load Redistribution</div>
+       <div class="metric-value" id="load-redistribution">2 miners throttled, 3 boosted</div>
+      </div>
+      <div class="visuals-row">
+        <div class="segmented-bar" aria-label="Load distribution">
+          <div class="segment boost" title="Boosted"></div>
+          <div class="segment boost" title="Boosted"></div>
+          <div class="segment boost" title="Boosted"></div>
+          <div class="segment throttle" title="Throttled"></div>
+          <div class="segment throttle" title="Throttled"></div>
+          <div class="segment idle" title="Idle"></div>
+        </div>
+        <div style="font-size: 0.9rem; color: #94a3b8;">Boost/Throttle/Idle</div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Efficiency Gain</div>
+       <div class="metric-value" id="efficiency-gain">+6.7<span class="metric-unit">% overall efficiency</span></div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Energy Cost per TH/s</div>
+       <div class="metric-value" id="energy-cost-ths">8.12 <span class="metric-unit">W/TH</span></div>
+      </div>
+     </div>
+
+     <!-- Power Economics -->
+     <div class="card span-2" data-category="ai" data-tab="ai">
+      <div class="card-header">
+       <h3 class="card-title">Power Economics</h3><span class="card-icon">⚡</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Current Tariff</div>
+       <div class="metric-value" id="current-tariff">$0.112 / kWh</div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Next Tariff Change</div>
+       <div class="metric-value" id="next-tariff">In 2h: drops to $0.094</div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">AI Schedule Adjustment</div>
+       <div class="metric-value" id="schedule-adjustment">Will scale up low-priority cluster A</div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Estimated Profit Boost</div>
+       <div class="metric-value" id="profit-boost">+3.4<span class="metric-unit">% daily yield</span></div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Renewable Input</div>
+       <div class="metric-value" id="renewable-input">Solar 28% contribution</div>
+      </div>
+      <div class="visuals-row">
+        <div class="donut" style="--portion: 28">
+          <div class="donut-label">28%</div>
+        </div>
+        <div style="font-size: 0.9rem; color: #94a3b8;">Renewables share</div>
+      </div>
+     </div>
+
+     <!-- Optional: Profit Forecast -->
+     <div class="card" data-category="ai" data-tab="ai">
+      <div class="card-header">
+       <h3 class="card-title">Profit Forecast</h3><span class="card-icon">💹</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Projected 24h Profit</div>
+       <div class="metric-value" id="profit-forecast">+0.024 <span class="metric-unit">ETH</span> (+12%)</div>
+      </div>
+     </div>
+
+     <!-- Optional: Smart Alerts Feed -->
+     <div class="card" data-category="ai" data-tab="ai">
+      <div class="card-header">
+       <h3 class="card-title">Smart Alerts</h3><span class="card-icon">🔔</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Latest</div>
+       <div class="metric-value" id="smart-alert">Thermal drift trend detected. Auto-adjusting fan curve.</div>
+      </div>
+     </div>
+
+     <!-- Optional: Carbon Efficiency -->
+     <div class="card tall" data-category="ai" data-tab="ai">
+      <div class="card-header">
+       <h3 class="card-title">Carbon Efficiency</h3><span class="card-icon">🌿</span>
+      </div>
+      <div class="metric">
+       <div class="metric-label">CO₂ per TH</div>
+       <div class="metric-value" id="carbon-efficiency">0.43 <span class="metric-unit">kg</span> / TH — below target</div>
+      </div>
+     </div>
+     <!-- Settings -->
+     <div class="card" data-category="settings" data-tab="reports">
+     <div class="card-header">
+       <h3 class="card-title">Settings</h3><span class="card-icon">🛠️</span>
+     </div>
+      <div class="metric">
+       <div class="metric-label">Theme</div>
+       <div class="metric-value" id="theme-setting">Dark</div>
+      </div>
+      <div class="metric">
+       <div class="metric-label">Notifications</div>
+       <div class="metric-value" id="notifications-setting">Enabled</div>
+      </div>
+     <div class="status-badge online" style="margin-top: 0.5rem;">
+       <div class="status-dot"></div> Configurable via edit panel
+      </div>
+     </div>
+     <!-- Executive KPIs -->
+     <div class="card span-2" data-category="system" data-tab="exec">
+      <div class="card-header">
+        <h3 class="card-title">Global KPIs</h3><span class="card-icon">📊</span>
+      </div>
+      <div class="metric"><div class="metric-label">Total Miners</div><div class="metric-value" id="total-miners">120</div></div>
+      <div class="metric"><div class="metric-label">Active Miners</div><div class="metric-value" id="active-miners">108</div></div>
+      <div class="metric"><div class="metric-label">Power Consumption</div><div class="metric-value" id="power-consumption">162 kW</div></div>
+      <div class="metric"><div class="metric-label">Global Hashrate</div><div class="metric-value" id="global-hashrate">3.8 <span class="metric-unit">PH/s</span></div></div>
+      <div class="metric"><div class="metric-label">Efficiency</div><div class="metric-value" id="global-efficiency">92<span class="metric-unit">%</span></div><div class="progress-bar"><div class="progress-fill" id="efficiency-progress" style="width:92%"></div></div></div>
+      <div class="metric"><div class="metric-label">Total Revenue</div><div class="metric-value" id="total-revenue">12.34 <span class="metric-unit">ETH</span> / 24h</div></div>
+     </div>
+
+     <!-- Temperature Alerts tab -->
+     <div class="card span-2" data-category="system" data-tab="temperature">
+      <div class="card-header"><h3 class="card-title">Per-Miner Temperatures</h3><span class="card-icon">🌡️</span></div>
+      <table class="data-table" aria-label="Miner temperatures">
+        <thead><tr><th>Miner</th><th>Temp</th><th>Status</th><th>Site</th></tr></thead>
+        <tbody id="temp-table">
+          <tr><td>#12A9</td><td>68°C</td><td style="color:#22c55e">Normal</td><td>Alpha</td></tr>
+          <tr><td>#24B3</td><td>79°C</td><td style="color:#f59e0b">Warning</td><td>Beta</td></tr>
+          <tr><td>#31C7</td><td>91°C</td><td style="color:#ef4444">Critical</td><td>Gamma</td></tr>
+        </tbody>
+      </table>
+     </div>
+     <div class="card" data-category="system" data-tab="temperature">
+      <div class="card-header"><h3 class="card-title">Temperature Thresholds</h3><span class="card-icon">🛠️</span></div>
+      <div class="metric"><div class="metric-label">Warning °C</div><div class="metric-value" id="temp-warn">80</div></div>
+      <div class="metric"><div class="metric-label">Critical °C</div><div class="metric-value" id="temp-critical">90</div></div>
+      <button id="save-thresholds" class="top-tab" style="margin-top:0.5rem">Save Thresholds</button>
+     </div>
+     <div class="card" data-category="system" data-tab="temperature">
+      <div class="card-header"><h3 class="card-title">Event Log</h3><span class="card-icon">📜</span></div>
+      <div id="temp-log" style="max-height:140px; overflow:auto; font-size:0.9rem; color: var(--text-dim)">
+        [12:01:02] #31C7 critical alert at Gamma
+      </div>
+     </div>
+
+     <!-- Project Manager -->
+     <div class="card span-2" data-category="system" data-tab="projects">
+      <div class="card-header"><h3 class="card-title">Client Sites</h3><span class="card-icon">🏢</span></div>
+      <details open><summary style="cursor:pointer;color:var(--text-dim)">Alpha Site (12 miners)</summary>
+        <table class="data-table"><thead><tr><th>Miner</th><th>Tech</th><th>Alerts</th></tr></thead>
+        <tbody><tr><td>#12A9</td><td>Jane</td><td>0</td></tr><tr><td>#12B1</td><td>Sam</td><td>1 (temp)</td></tr></tbody></table>
+      </details>
+      <details><summary style="cursor:pointer;color:var(--text-dim)">Beta Site (18 miners)</summary>
+        <table class="data-table"><thead><tr><th>Miner</th><th>Tech</th><th>Alerts</th></tr></thead>
+        <tbody><tr><td>#24B3</td><td>Alex</td><td>2 (network)</td></tr></tbody></table>
+      </details>
+      <div style="margin-top:0.5rem"><button class="top-tab" id="export-projects-csv">Export CSV</button> <button class="top-tab" id="export-projects-pdf">Export PDF</button></div>
+     </div>
+
+     <!-- Alerts & Task Management -->
+     <div class="card span-2" data-category="security" data-tab="alerts">
+      <div class="card-header"><h3 class="card-title">Central Alerts</h3><span class="card-icon">🚨</span></div>
+      <label for="alert-filter" class="metric-label">Filter by severity</label>
+      <select id="alert-filter" class="top-tab" style="border-radius:8px">
+        <option>All</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+      </select>
+      <table class="data-table" id="alerts-table"><thead><tr><th>Time</th><th>Miner</th><th>Severity</th><th>Task</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>12:02</td><td>#31C7</td><td>Critical</td><td>Replace fan</td><td><button class="top-tab resolve-btn">Resolve</button></td></tr>
+          <tr><td>12:10</td><td>#24B3</td><td>High</td><td>Check PSU</td><td><button class="top-tab resolve-btn">Resolve</button></td></tr>
+        </tbody>
+      </table>
+     </div>
+
+     <!-- Global Rank -->
+     <div class="card" data-category="network" data-tab="rank">
+      <div class="card-header"><h3 class="card-title">Leaderboard</h3><span class="card-icon">🏆</span></div>
+      <div id="leaderboard" style="display:grid; gap:0.5rem">
+        <div>#1 Nuclyan OS — Hashrate ▲ 3% (Global)</div>
+        <div>#5 Regional — Efficiency ▲ 1.2%</div>
+      </div>
+     </div>
+
+     <!-- Miner Analytics -->
+     <div class="card span-2" data-category="mining" data-tab="miner">
+      <div class="card-header"><h3 class="card-title">Miner Search</h3><span class="card-icon">🔎</span></div>
+      <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem">
+        <input id="miner-search" class="top-tab" placeholder="Serial # / status / efficiency" style="flex:1" />
+        <button id="miner-search-btn" class="top-tab">Search</button>
+      </div>
+      <div class="shimmer" style="height:120px; border:1px solid var(--border); border-radius:8px"></div>
+      <div class="metric"><div class="metric-label">Inactive over 24h</div><div class="metric-value" id="inactive-over-24h">3</div></div>
+     </div>
+
+     <!-- Reports -->
+     <div class="card" data-category="settings" data-tab="reports">
+      <div class="card-header"><h3 class="card-title">System Alerts & Reporting</h3><span class="card-icon">📑</span></div>
+      <div style="display:flex; gap:0.5rem">
+        <button id="download-daily" class="top-tab">Download Daily (CSV)</button>
+        <button id="download-weekly" class="top-tab">Download Weekly (CSV)</button>
+        <button id="print-pdf" class="top-tab">Export PDF</button>
+      </div>
+      <div class="metric"><div class="metric-label">Last Summary Email</div><div class="metric-value" id="last-summary">Sent 11:45</div></div>
+     </div>
+    </div>
+   </main>
+  </div>
+  <script>
+        // Authentication state
+        let loginAttempts = 0;
+        let maxAttempts = 5;
+        let isLocked = false;
+        let totalFailedAttempts = 0;
+
+        // Valid credentials
+        const validCredentials = {
+            username: 'admin123',
+            password: 'password123'
+        };
+        const masterKey = 'masterkey123';
+
+        // Temporary override disabled: require login to access dashboard
+        const bypassLogin = false;
+
+        // Configuration object
+        const defaultConfig = {
+            dashboard_title: "Blockchain Control Center",
+            pool_name: "EtherMine",
+            node_type: "Full Node"
+        };
+
+        // Initialize Element SDK
+        if (window.elementSdk) {
+            window.elementSdk.init({
+                defaultConfig: defaultConfig,
+                onConfigChange: async (config) => {
+                    const title = config.dashboard_title || defaultConfig.dashboard_title;
+                    const poolName = config.pool_name || defaultConfig.pool_name;
+                    const nodeType = config.node_type || defaultConfig.node_type;
+
+                    // Update dashboard title
+                    document.getElementById('dashboard-title').textContent = title;
+                    document.getElementById('main-title').textContent = title;
+
+                    // Update pool name
+                    document.getElementById('pool-name').textContent = poolName;
+
+                    // Update node type
+                    document.getElementById('node-type').textContent = nodeType;
+                },
+                mapToCapabilities: (config) => ({
+                    recolorables: [
+                        {
+                            get: () => config.background_color || "#0F172A",
+                            set: (value) => {
+                                config.background_color = value;
+                                window.elementSdk.setConfig({ background_color: value });
+                            }
+                        },
+                        {
+                            get: () => config.card_color || "#1E293B",
+                            set: (value) => {
+                                config.card_color = value;
+                                window.elementSdk.setConfig({ card_color: value });
+                            }
+                        },
+                        {
+                            get: () => config.accent_color || "#14B8A6",
+                            set: (value) => {
+                                config.accent_color = value;
+                                window.elementSdk.setConfig({ accent_color: value });
+                            }
+                        },
+                        {
+                            get: () => config.text_color || "#F8FAFC",
+                            set: (value) => {
+                                config.text_color = value;
+                                window.elementSdk.setConfig({ text_color: value });
+                            }
+                        },
+                        {
+                            get: () => config.secondary_text_color || "#94A3B8",
+                            set: (value) => {
+                                config.secondary_text_color = value;
+                                window.elementSdk.setConfig({ secondary_text_color: value });
+                            }
+                        }
+                    ],
+                    borderables: [],
+                    fontEditable: {
+                        get: () => config.font_family || "Inter",
+                        set: (value) => {
+                            config.font_family = value;
+                            window.elementSdk.setConfig({ font_family: value });
+                        }
+                    },
+                    fontSizeable: {
+                        get: () => config.font_size || 16,
+                        set: (value) => {
+                            config.font_size = value;
+                            window.elementSdk.setConfig({ font_size: value });
+                        }
+                    }
+                }),
+                mapToEditPanelValues: (config) => new Map([
+                    ["dashboard_title", config.dashboard_title || defaultConfig.dashboard_title],
+                    ["pool_name", config.pool_name || defaultConfig.pool_name],
+                    ["node_type", config.node_type || defaultConfig.node_type]
+                ])
+            });
+        }
+
+        // Single filtering: workspace tab only
+        let currentTab = 'exec';
+
+        function applyFilters() {
+            const cards = document.querySelectorAll('.dashboard-grid .card');
+            let visibleCount = 0;
+            cards.forEach(card => {
+                const cat = card.getAttribute('data-category');
+                const tab = card.getAttribute('data-tab') || 'exec';
+                const tabMatch = (tab === currentTab);
+                if (tabMatch) {
+                    card.style.display = '';
+                    card.style.animation = 'fadeIn 0.3s ease';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Top workspace tabs
+        document.querySelectorAll('.top-tab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.getAttribute('data-tab');
+                if (!tab) return;
+                document.querySelectorAll('.top-tab').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTab = tab;
+                applyFilters();
+                const titleEl = document.getElementById('main-title');
+                if (titleEl) titleEl.textContent = btn.textContent.trim();
+            });
+        });
+
+        // Sidebar navigation (primary)
+        document.querySelectorAll('.nav-tab a[data-tab]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tab = link.getAttribute('data-tab');
+                if (!tab) return;
+                document.querySelectorAll('.nav-tab').forEach(li => li.classList.remove('active'));
+                const item = link.closest('.nav-tab');
+                if (item) item.classList.add('active');
+                currentTab = tab;
+                applyFilters();
+                const titleEl = document.getElementById('main-title');
+                if (titleEl) titleEl.textContent = link.textContent.trim();
+            });
+        });
+
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('current-time').textContent = timeString;
+        }
+
+        // Animate metric values
+        function animateMetrics() {
+            const metrics = [
+                { id: 'hash-rate', baseValue: 162.4, unit: 'TH/s', variance: 5 },
+                { id: 'power-draw', baseValue: 1350, unit: 'W', variance: 50 },
+                { id: 'cpu-load', baseValue: 73, unit: '%', variance: 10 },
+                { id: 'connections', baseValue: 27, unit: 'peers', variance: 3 },
+                { id: 'block-height', baseValue: 874221, unit: '', variance: 1 },
+                { id: 'latency', baseValue: 38, unit: 'ms', variance: 15 },
+                { id: 'shares-accepted', baseValue: 13284, unit: '', variance: 50 },
+                { id: 'temperature', baseValue: 68, unit: '°C', variance: 4 },
+                { id: 'fan-speed', baseValue: 4200, unit: 'RPM', variance: 200 }
+            ];
+
+            // Executive KPIs simulated values
+            const totalMiners = 120;
+            const activeVariance = Math.floor((Math.random() - 0.5) * 4);
+            const activeMiners = Math.max(0, Math.min(totalMiners, 108 + activeVariance));
+            const inactivePercent = (totalMiners - activeMiners) / totalMiners * 100;
+            const healthBanner = document.getElementById('health-banner');
+            if (healthBanner) {
+                if (inactivePercent > 10) { healthBanner.classList.add('show'); } else { healthBanner.classList.remove('show'); }
+                const text = document.getElementById('health-text');
+                if (text) text.textContent = `${inactivePercent.toFixed(1)}% of miners inactive. Review Temperature Alerts.`;
+            }
+            const kpiMap = [
+                { id: 'total-miners', value: totalMiners, unit: '' },
+                { id: 'active-miners', value: activeMiners, unit: '' },
+                { id: 'power-consumption', value: (160 + (Math.random() - 0.5) * 8).toFixed(1) + ' kW', unit: '' },
+                { id: 'global-hashrate', value: (3.8 + (Math.random() - 0.5) * 0.1).toFixed(2) + ' PH/s', unit: '' },
+                { id: 'global-efficiency', value: (92 + (Math.random() - 0.5) * 1.6).toFixed(1), unit: '%' },
+                { id: 'total-revenue', value: (12.3 + (Math.random() - 0.5) * 0.5).toFixed(2) + ' ETH / 24h', unit: '' }
+            ];
+            kpiMap.forEach(k => {
+                const el = document.getElementById(k.id);
+                if (el) { el.textContent = k.value; }
+            });
+            const eff = document.getElementById('efficiency-progress');
+            if (eff) {
+                const val = parseFloat(String(kpiMap[4].value).replace('%','')) || 92;
+                eff.style.width = Math.max(0, Math.min(100, val)) + '%';
+            }
+
+            // Animate ring and donut visuals if present
+            const ring = document.querySelector('.ring');
+            if (ring) {
+                const current = parseFloat((ring.style.getPropertyValue('--p') || '91').replace('%','')) || 91;
+                const next = Math.max(0, Math.min(100, current + (Math.random() - 0.5) * 6));
+                ring.style.setProperty('--p', `${next.toFixed(0)}%`);
+                const label = ring.querySelector('.ring-label');
+                if (label) label.textContent = `${next.toFixed(0)}%`;
+            }
+            const donut = document.querySelector('.donut');
+            if (donut) {
+                const current = parseFloat(donut.style.getPropertyValue('--portion') || '28');
+                const next = Math.max(0, Math.min(100, current + (Math.random() - 0.5) * 6));
+                donut.style.setProperty('--portion', `${next.toFixed(0)}`);
+                const label = donut.querySelector('.donut-label');
+                if (label) label.textContent = `${next.toFixed(0)}%`;
+            }
+
+            metrics.forEach(metric => {
+                const element = document.getElementById(metric.id);
+                if (element) {
+                    const variance = (Math.random() - 0.5) * metric.variance;
+                    const newValue = metric.baseValue + variance;
+                    const formattedValue = metric.unit === '' ? 
+                        Math.floor(newValue).toLocaleString() : 
+                        newValue.toFixed(1);
+                    
+                    // Add animation class
+                    element.classList.add('animate');
+                    
+                    // Update value
+                    if (metric.unit) {
+                        element.innerHTML = `${formattedValue} <span class="metric-unit">${metric.unit}</span>`;
+                    } else {
+                        element.textContent = formattedValue;
+                    }
+                    
+                    // Remove animation class
+                    setTimeout(() => {
+                        element.classList.remove('animate');
+                    }, 500);
+                }
+            });
+
+            // Smoothly update Smart Alerts text with fade
+            const smartAlertEl = document.getElementById('smart-alert');
+            if (smartAlertEl) {
+                const messages = [
+                    'Thermal drift trend detected. Auto-adjusting fan curve.',
+                    'Voltage fluctuation pattern observed. Balancing load across clusters.',
+                    'Unusual latency spike detected. Prioritizing high-efficiency miners.',
+                    'Predictive maintenance: bearing wear risk rising on Miner #24.',
+                    'Hashrate deviation minimized via adaptive throttling.',
+                ];
+                if (Math.random() < 0.4) { // update sometimes to avoid noise
+                    smartAlertEl.classList.add('fade-out');
+                    setTimeout(() => {
+                        smartAlertEl.textContent = messages[Math.floor(Math.random() * messages.length)];
+                        smartAlertEl.classList.remove('fade-out');
+                        smartAlertEl.classList.add('fade-in');
+                        setTimeout(() => smartAlertEl.classList.remove('fade-in'), 300);
+                    }, 200);
+                }
+            }
+
+            // Update progress bars
+            const cpuProgress = document.getElementById('cpu-progress');
+            if (cpuProgress) {
+                const newCpuValue = 73 + (Math.random() - 0.5) * 20;
+                cpuProgress.style.width = Math.max(0, Math.min(100, newCpuValue)) + '%';
+            }
+        }
+
+        // Theme toggle with persistence
+        function setTheme(mode) {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            const label = document.getElementById('theme-label');
+            if (mode === 'light') {
+                body.classList.add('light');
+                if (icon) icon.textContent = '☀️';
+                if (label) label.textContent = 'Light';
+            } else {
+                body.classList.remove('light');
+                if (icon) icon.textContent = '🌙';
+                if (label) label.textContent = 'Dark';
+            }
+            try { localStorage.setItem('theme', mode); } catch {}
+            const themeSetting = document.getElementById('theme-setting');
+            if (themeSetting) themeSetting.textContent = mode === 'light' ? 'Light' : 'Dark';
+        }
+
+        const savedTheme = (() => { try { return localStorage.getItem('theme'); } catch { return null; } })();
+        setTheme(savedTheme === 'light' ? 'light' : 'dark');
+        const toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const isLight = document.body.classList.contains('light');
+                setTheme(isLight ? 'dark' : 'light');
+            });
+        }
+
+        // Simple exports
+        function downloadCSV(name, rows) {
+            const csv = rows.map(r => r.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = name + '.csv';
+            document.body.appendChild(a); a.click(); a.remove();
+        }
+        const projCsvBtn = document.getElementById('export-projects-csv');
+        if (projCsvBtn) {
+            projCsvBtn.addEventListener('click', () => {
+                downloadCSV('projects', [['Site','Miner','Tech','Alerts'], ['Alpha','#12A9','Jane','0'], ['Beta','#24B3','Alex','2 (network)']]);
+            });
+        }
+        const projPdfBtn = document.getElementById('export-projects-pdf');
+        if (projPdfBtn) {
+            projPdfBtn.addEventListener('click', () => { window.print(); });
+        }
+        const dlDaily = document.getElementById('download-daily');
+        if (dlDaily) { dlDaily.addEventListener('click', () => downloadCSV('daily-summary', [['Time','Metric','Value'],['11:45','Revenue','12.34 ETH']])); }
+        const dlWeekly = document.getElementById('download-weekly');
+        if (dlWeekly) { dlWeekly.addEventListener('click', () => downloadCSV('weekly-summary', [['Day','Revenue ETH'],['Mon','12.1'],['Tue','12.5']])); }
+        const printPdf = document.getElementById('print-pdf');
+        if (printPdf) { printPdf.addEventListener('click', () => window.print()); }
+
+        // Alerts resolve + filter demo
+        document.querySelectorAll('.resolve-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const row = btn.closest('tr');
+                if (row) { row.remove(); }
+            });
+        });
+        const alertFilter = document.getElementById('alert-filter');
+        if (alertFilter) {
+            alertFilter.addEventListener('change', () => {
+                const val = alertFilter.value;
+                document.querySelectorAll('#alerts-table tbody tr').forEach(r => {
+                    const sev = r.children[2]?.textContent || '';
+                    const shouldShow = (val === 'All' || sev === val);
+                    if (shouldShow) {
+                        // Show with fade-in if currently hidden
+                        const wasHidden = r.style.display === 'none';
+                        r.style.display = '';
+                        if (wasHidden) {
+                            r.classList.remove('fade-out');
+                            r.classList.add('fade-in');
+                            setTimeout(() => r.classList.remove('fade-in'), 300);
+                        }
+                    } else {
+                        // Fade-out then hide
+                        r.classList.remove('fade-in');
+                        r.classList.add('fade-out');
+                        setTimeout(() => { r.style.display = 'none'; r.classList.remove('fade-out'); }, 300);
+                    }
+                });
+            });
+        }
+
+        // Add hover effects to cards (no infinite flicker)
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.animation = 'glow 0.8s ease-in-out 1';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.animation = '';
+            });
+        });
+
+        // Authentication functions
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 4000);
+        }
+
+        function updateAttemptsDisplay() {
+            const remaining = maxAttempts - loginAttempts;
+            document.getElementById('attempts-remaining').textContent = remaining;
+            document.getElementById('total-attempts').textContent = totalFailedAttempts;
+        }
+
+        function lockSystem() {
+            isLocked = true;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('locked-screen').style.display = 'flex';
+            document.getElementById('locked-screen').style.animation = 'fadeIn 0.5s ease';
+        }
+
+        function unlockSystem() {
+            isLocked = false;
+            loginAttempts = 0;
+            document.getElementById('locked-screen').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('login-screen').style.animation = 'fadeIn 0.5s ease';
+            updateAttemptsDisplay();
+        }
+
+        function accessDashboard() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('locked-screen').style.display = 'none';
+            document.getElementById('dashboard-container').style.display = 'flex';
+            document.getElementById('dashboard-container').style.animation = 'slideUp 0.8s ease';
+            
+            // Start dashboard functionality
+            updateTime();
+            setInterval(updateTime, 1000);
+            setInterval(animateMetrics, 4000);
+
+            // Ensure initial filters reflect active workspace tab and sidebar category
+            try {
+                applyFilters();
+                const activeNav = document.querySelector('.nav-tab.active a[data-tab]');
+                const titleEl = document.getElementById('main-title');
+                if (activeNav && titleEl) titleEl.textContent = activeNav.textContent.trim();
+            } catch (e) { /* no-op */ }
+
+            // Initial animation delay for cards
+            setTimeout(() => {
+                document.querySelectorAll('.card').forEach((card, index) => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.6s ease';
+                    
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
+            }, 100);
+        }
+
+        // Login form handler
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (username === validCredentials.username && password === validCredentials.password) {
+                // Successful login
+                accessDashboard();
+            } else {
+                // Failed login
+                loginAttempts++;
+                totalFailedAttempts++;
+                
+                if (loginAttempts >= maxAttempts) {
+                    lockSystem();
+                } else {
+                    const remaining = maxAttempts - loginAttempts;
+                    showError('login-error', `Invalid credentials. ${remaining} attempts remaining.`);
+                    updateAttemptsDisplay();
+                    
+                    // Add shake animation to login box
+                    const loginBox = document.querySelector('.login-box');
+                    loginBox.style.animation = 'shake 0.5s ease-in-out';
+                    setTimeout(() => {
+                        loginBox.style.animation = '';
+                    }, 500);
+                }
+                
+                // Clear form
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+            }
+        });
+
+        // Unlock form handler
+        document.getElementById('unlock-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const enteredKey = document.getElementById('master-key').value;
+            
+            if (enteredKey === masterKey) {
+                // Successful unlock
+                unlockSystem();
+                document.getElementById('master-key').value = '';
+            } else {
+                // Failed unlock
+                totalFailedAttempts++;
+                showError('unlock-error', 'Invalid master key. Access denied.');
+                document.getElementById('total-attempts').textContent = totalFailedAttempts;
+                
+                // Add shake animation to locked box
+                const lockedBox = document.querySelector('.login-box.locked');
+                lockedBox.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => {
+                    lockedBox.style.animation = '';
+                }, 500);
+                
+                // Clear form
+                document.getElementById('master-key').value = '';
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            // Hide dashboard
+            document.getElementById('dashboard-container').style.display = 'none';
+            
+            // Show login screen
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('login-screen').style.animation = 'fadeIn 0.5s ease';
+            
+            // Clear any form data
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        });
+
+        // Initialize login screen
+        updateAttemptsDisplay();
+
+        // If bypassLogin is enabled, open dashboard immediately
+        if (bypassLogin) {
+            accessDashboard();
+        }
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9963e1d713a4252a',t:'MTc2MTc1MzU4OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
